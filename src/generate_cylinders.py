@@ -1,4 +1,6 @@
 import numpy as np
+from smithers.io.obj import ObjHandler
+
 
 def compute_cylinder_dimensions(
     scales=None, dimensions=None, propeller_diameter=None
@@ -24,14 +26,35 @@ def compute_cylinder_dimensions(
             "One of `scales` and `dimensions` must not be `None`."
         )
     if scales and not propeller_diameter:
-        raise ValueError("The diameter of the propeller is needed")
+        raise ValueError("The diameter of the propeller is needed.")
+
+    if dimensions and np.asarray(dimensions).ndim != 2:
+        raise ValueError("Expected 2D array, got 1D.")
+    if scales and np.asarray(scales).ndim != 2:
+        raise ValueError("Expected 2D array, got 1D.")
 
     if dimensions and np.asarray(dimensions).shape[1] != 3:
-        raise ValueError('Wrong number of components along the second axis')
+        raise ValueError("Wrong number of components along the second axis.")
     if scales and np.asarray(scales).shape[1] != 3:
-        raise ValueError('Wrong number of components along the second axis')
+        raise ValueError("Wrong number of components along the second axis.")
 
     if scales:
         return np.asarray(scales) * propeller_diameter
     else:
         return np.asarray(dimensions)
+
+
+def generate_cylinders(
+    dimensions,
+    paths=["innerCylinder.obj", "middleCylinder.obj", "outerCylinder.obj"],
+):
+    base_dimension = ObjHandler.dimension(base_cylinder)
+    base_cylinder = ObjHandler.read("res/cylinder.obj")
+
+    for expected_dimension, filename in zip(dimensions, paths):
+        scale_factors = expected_dimension / base_dimension
+        ObjHandler.scale(base_cylinder, scale_factors)
+        ObjHandler.write(filename, base_cylinder)
+
+        # after scaling we unscale to reset che changes to the base cylinder
+        ObjHandler.scale(base_cylinder, 1 / scale_factors)
