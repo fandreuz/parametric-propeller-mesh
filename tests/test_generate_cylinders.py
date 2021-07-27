@@ -1,6 +1,11 @@
-from src.generate_cylinders import compute_cylinder_dimensions
+from src.generate_cylinders import compute_cylinder_dimensions, generate_cylinders
 import numpy as np
 import pytest
+from smithers.io.obj import ObjHandler
+
+# ------------------------
+# test cylinder dimensions
+# ------------------------
 
 def test_compute_cylinder_dimensions_scale():
     result = compute_cylinder_dimensions(scales=[
@@ -31,6 +36,22 @@ def test_compute_cylinder_dimensions_dimensions():
     ])
 
     np.testing.assert_almost_equal(result, expected, decimal=7)
+
+# ------------------------
+# test cylinder generation
+# ------------------------
+
+def test_generate_cylinders():
+    generate_cylinders(np.array([
+        [1,1,1],
+        [2,2,2]
+    ]), paths=['tests/test_datasets/smol.obj','tests/test_datasets/big.obj'])
+
+    smol = ObjHandler.read('tests/test_datasets/smol.obj')
+    big = ObjHandler.read('tests/test_datasets/big.obj')
+
+    assert all(ObjHandler.dimension(smol) == [1,1,1])
+    assert all(ObjHandler.dimension(big) == [2,2,2])
 
 # ------------------------------------------------
 # check that the appropriate expections are thrown

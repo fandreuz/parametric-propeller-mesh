@@ -48,8 +48,8 @@ def generate_cylinders(
     dimensions,
     paths=["innerCylinder.obj", "middleCylinder.obj", "outerCylinder.obj"],
 ):
-    base_dimension = ObjHandler.dimension(base_cylinder)
     base_cylinder = ObjHandler.read("res/cylinder.obj")
+    base_dimension = ObjHandler.dimension(base_cylinder)
 
     for expected_dimension, filename in zip(dimensions, paths):
         scale_factors = expected_dimension / base_dimension
