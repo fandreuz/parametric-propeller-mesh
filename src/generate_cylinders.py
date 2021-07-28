@@ -46,7 +46,7 @@ def compute_cylinder_dimensions(
 
 def generate_cylinders_obj(
     dimensions,
-    base_folder='.'
+    base_folder='.',
     paths=["innerCylinder.obj", "middleCylinder.obj", "outerCylinder.obj"],
 ):
     base_cylinder = ObjHandler.read("res/cylinder.obj")
