@@ -44,7 +44,7 @@ def compute_cylinder_dimensions(
         return np.asarray(dimensions)
 
 
-def generate_cylinders(
+def generate_cylinders_obj(
     dimensions,
     base_folder='.'
     paths=["innerCylinder.obj", "middleCylinder.obj", "outerCylinder.obj"],
