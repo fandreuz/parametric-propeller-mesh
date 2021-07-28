@@ -6,10 +6,10 @@ from src.generate_cylinders import (
 )
 from src.openfoam_parametrizer import generate_openfoam_configuration_dicts
 from pathlib import Path
+import sys
 
-output_folder = "propeller"
-
-propeller_path = "propeller.stl"
+openfoam_folder = sys.argv[1]
+propeller_path = sys.argv[2]
 stl = STLHandler.read(propeller_path)
 
 # first of all we read the dimension of the propeller
