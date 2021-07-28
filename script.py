@@ -27,7 +27,7 @@ cylinder_dimensions = compute_cylinder_dimensions(
 )
 generate_cylinders_obj(
     dimensions=cylinder_dimensions,
-    base_folder=str(Path(output_folder) / "constant" / "triSurface"),
+    base_folder=str(Path(openfoam_folder) / "constant" / "triSurface"),
 )
 
 # we take half of the diameter of the outer cylinder, plus an epsilon
@@ -41,7 +41,7 @@ maxy = 0.21 / yfactor
 
 # then we generate the parametrized dictionaries
 generate_openfoam_configuration_dicts(
-    destination=output_folder,
+    destination=openfoam_folder,
     # OpenFOAM parameters
     decompose_nx=4,
     decompose_ny=4,
