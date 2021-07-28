@@ -36,8 +36,8 @@ minx,minz = (-maxx,-maxz)
 
 # y is the length
 yfactor = (0.21 + 0.81) * cylinder_dimensions[-1][1]
-miny = - 0.81 / yfactor
-maxy = 0.21 / yfactor
+miny = - 0.81 * yfactor
+maxy = 0.21 * yfactor
 
 # then we generate the parametrized dictionaries
 generate_openfoam_configuration_dicts(
