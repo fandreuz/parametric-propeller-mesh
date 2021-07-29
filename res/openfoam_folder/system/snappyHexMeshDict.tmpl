@@ -81,7 +81,18 @@ geometry
     propeller
     {
         type        triSurfaceMesh;
-        file        "propeller.stl";
+        file        "propeller.obj";
+        regions
+        {
+            propellerStem
+            {
+                 name       propellerStem;
+            }
+            propellerTip
+            {
+                 name       propellerTip;
+            }
+        }
     }
 };
 
@@ -170,6 +181,7 @@ castellatedMeshControls
         outerCylinder
         {
             level       (0 0);
+            /*
             regions
             {
                 inlet
@@ -189,14 +201,11 @@ castellatedMeshControls
                     }
                 }
             }
+            */
         }
         propeller
         {
-            //level       (4 4);
-            // there were multiple regions originally
-            level       (4 5);
-
-            /*
+            level       (4 4);
             regions
             {
                 propellerTip
@@ -204,7 +213,6 @@ castellatedMeshControls
                     level (4 5);
                 }
             }
-            */
         }
     }
 
