@@ -15,7 +15,7 @@ openfoam_path = Path(openfoam_folder)
 propeller_path = sys.argv[2]
 
 # copy the propeller to the OpenFOAM folder
-copyfile(propeller_path, str(openfoam_path / 'constant' / 'triSurface' / Path(propeller_path).name))
+copyfile(propeller_path, str(openfoam_path / 'constant' / 'triSurface' / 'propeller.obj'))
 
 # first of all we read the dimension of the propeller
 data = DataWrapper(propeller_path)
