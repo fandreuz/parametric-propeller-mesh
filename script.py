@@ -7,10 +7,16 @@ from src.generate_cylinders import (
 from src.openfoam_parametrizer import generate_openfoam_configuration_dicts
 from pathlib import Path
 import sys
+from shutil import copyfile
 
 openfoam_folder = sys.argv[1]
+openfoam_path = Path(openfoam_folder)
+
 propeller_path = sys.argv[2]
 stl = STLHandler.read(propeller_path)
+
+# copy the propeller to the OpenFOAM folder
+copyfile(propeller_path, str(openfoam_path / 'constant' / 'triSurface' / Path(propeller_path).name))
 
 # first of all we read the dimension of the propeller
 propeller_dimension = dimension(stl)
@@ -27,7 +33,7 @@ cylinder_dimensions = compute_cylinder_dimensions(
 )
 generate_cylinders_obj(
     dimensions=cylinder_dimensions,
-    base_folder=str(Path(openfoam_folder) / "constant" / "triSurface"),
+    base_folder=str(openfoam_path / "constant" / "triSurface"),
 )
 
 # we take half of the diameter of the outer cylinder, plus an epsilon
