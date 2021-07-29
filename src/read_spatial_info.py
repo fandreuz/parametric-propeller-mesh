@@ -18,7 +18,7 @@ class DataWrapper:
             )
 
     @property
-    def points():
+    def points(self):
         return self._points
 
 
