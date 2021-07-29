@@ -1,5 +1,5 @@
 from smithers.io.stlhandler import STLHandler
-from src.read_stl_spatial_info import dimension, diameter, min_max
+from src.read_spatial_info import dimension, diameter, min_max, DataWrapper
 from src.generate_cylinders import (
     generate_cylinders_obj,
     compute_cylinder_dimensions,
@@ -13,14 +13,14 @@ openfoam_folder = sys.argv[1]
 openfoam_path = Path(openfoam_folder)
 
 propeller_path = sys.argv[2]
-stl = STLHandler.read(propeller_path)
 
 # copy the propeller to the OpenFOAM folder
 copyfile(propeller_path, str(openfoam_path / 'constant' / 'triSurface' / Path(propeller_path).name))
 
 # first of all we read the dimension of the propeller
-propeller_dimension = dimension(stl)
-propeller_diameter = diameter(stl)
+data = DataWrapper(propeller_path)
+propeller_dimension = dimension(data)
+propeller_diameter = diameter(data)
 
 # then we generate three cylinders
 cylinder_dimensions = compute_cylinder_dimensions(
