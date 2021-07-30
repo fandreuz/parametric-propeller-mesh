@@ -71,7 +71,7 @@ def generate_cylinders_obj(
 
             # first of all we find the two regions in which Y remains constant
             min_y = np.min(base_cylinder.vertices[:, 1])
-            max_y = np.min(base_cylinder.vertices[:, 1])
+            max_y = np.max(base_cylinder.vertices[:, 1])
 
             poly = np.asarray(base_cylinder.polygons) - 1
             poly_vertices_y = base_cylinder.vertices[poly.flatten()][:, 1]
