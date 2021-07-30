@@ -46,16 +46,67 @@ def compute_cylinder_dimensions(
 
 def generate_cylinders_obj(
     dimensions,
-    base_folder='.',
+    base_folder=".",
     paths=["innerCylinder.obj", "middleCylinder.obj", "outerCylinder.obj"],
+    regions=["innerCylinder", "middleCylinder", "outerCylinder"],
 ):
     base_cylinder = ObjHandler.read("res/cylinder.obj")
     base_dimension = ObjHandler.dimension(base_cylinder)
 
-    for expected_dimension, filename in zip(dimensions, paths):
+    for expected_dimension, filename, region, idx in zip(
+        dimensions, paths, regions, range(len(dimensions))
+    ):
         scale_factors = expected_dimension / base_dimension
         ObjHandler.scale(base_cylinder, scale_factors)
-        ObjHandler.write(base_folder + '/' + filename, base_cylinder)
+
+        base_cylinder.regions.clear()
+        base_cylinder.regions_change_indexes.clear()
+
+        if idx != len(dimensions) - 1:
+            base_cylinder.regions.append(region)
+            base_cylinder.regions_change_indexes.append((0, 0))
+        else:
+            # the outermost cylinder wants three regions:
+            # outerCylinderWall, outerCylinderInlet, outerCylinderOutlet
+
+            # first of all we find the two regions in which Y remains constant
+            min_y = np.min(base_cylinder.vertices[:, 1])
+            max_y = np.min(base_cylinder.vertices[:, 1])
+
+            poly = np.asarray(base_cylinder.polygons) - 1
+            poly_vertices_y = base_cylinder.vertices[poly.flatten()][:, 1]
+
+            def find_plateau_polygons(constant_y):
+                return np.all(
+                    (poly_vertices_y == constant_y).reshape(-1, poly.shape[1]),
+                    axis=1,
+                )
+
+            left_bool_idxes = find_plateau_polygons(min_y)
+            right_bool_idxes = find_plateau_polygons(max_y)
+            walls_bool_idxes = np.logical_not(
+                np.logical_or(left_bool_idxes, right_bool_idxes)
+            )
+
+            left = poly[left_bool_idxes]
+            right = poly[right_bool_idxes]
+            walls = poly[walls_bool_idxes]
+
+            base_cylinder.regions.extend(
+                map(lambda s: region + s, ["Inlet", "Outlet", "Wall"])
+            )
+            base_cylinder.regions_change_indexes.append((0, 0))
+            base_cylinder.regions_change_indexes.append((left.shape[0], 1))
+            base_cylinder.regions_change_indexes.append(
+                (left.shape[0] + right.shape[0], 2)
+            )
+
+            # as always we increment the result by 1
+            base_cylinder.polygons = (
+                np.concatenate([left, right, walls], axis=0) + 1
+            )
+
+        ObjHandler.write(base_folder + "/" + filename, base_cylinder)
 
         # after scaling we unscale to reset che changes to the base cylinder
         ObjHandler.scale(base_cylinder, 1 / scale_factors)
