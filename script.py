@@ -9,6 +9,10 @@ from pathlib import Path
 import sys
 from shutil import copyfile
 
+# PARAMETERS
+# 1: the path to the OpenFOAM folder (with the subfolders system, constant, etc)
+# 2: the path to the propeller.obj
+
 openfoam_folder = sys.argv[1]
 openfoam_path = Path(openfoam_folder)
 
