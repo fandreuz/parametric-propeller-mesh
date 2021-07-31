@@ -31,11 +31,11 @@ cylinder_dimensions = compute_cylinder_dimensions(
     scales=[
         [1.1, 3, 1.1],
         [2.5, 9, 2.5],
-        [5, 12, 5],
+        [5, 12.7, 5],
     ],
     propeller_diameter=propeller_diameter,
 )
-generate_cylinders_obj(
+miny, maxy = generate_cylinders_obj(
     dimensions=cylinder_dimensions,
     base_folder=str(openfoam_path / "constant" / "triSurface"),
 )
@@ -46,8 +46,6 @@ minx,minz = (-maxx,-maxz)
 
 # y is the length
 yfactor = (0.21 + 0.81) * cylinder_dimensions[-1][1]
-miny = - 0.81 * yfactor
-maxy = 0.21 * yfactor
 
 # then we generate the parametrized dictionaries
 generate_openfoam_configuration_dicts(
@@ -63,3 +61,5 @@ generate_openfoam_configuration_dicts(
     minz=minz,
     maxz=maxz,
 )
+
+# potrei aver invertito inlet e outlet

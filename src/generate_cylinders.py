@@ -50,6 +50,33 @@ def generate_cylinders_obj(
     paths=["innerCylinder.obj", "middleCylinder.obj", "outerCylinder.obj"],
     regions=["innerCylinder", "middleCylinder", "outerCylinder"],
 ):
+    """Generate .obj files which contain cylinder that can be used to
+    bound volumes with different mesh resolutions.
+
+    The outermost cylinder contains three regions: `regions[-1]`Inlet,
+    `regions[-1]`Outlet, `regions[-1]`Wall, while the other cylinders contain
+    a single region named according to the parameter `regions`.
+
+    :param dimensions: A 2D array which represents the dimension of each
+        cylinder. A row corresponds to a cylinder, the (3) columns correspond
+        to X,Y,Z dimensions. See also :func:`compute_cylinder_dimensions`.
+    :type dimensions: np.ndarray
+    :param base_folder: The root folder of the OpenFOAM case taken into account,
+        OBJ files are saved into `base_folder/`constant/triSurface.
+        Defaults to "."
+    :type base_folder: str, optional
+    :param paths: Names of the cylinders, defaults to
+        ["innerCylinder.obj", "middleCylinder.obj", "outerCylinder.obj"]
+    :type paths: list, optional
+    :param regions: Names of the regions inside of cylinders, specified
+        individually for each cylinder. Defaults to
+        ["innerCylinder", "middleCylinder", "outerCylinder"]
+    :type regions: list, optional
+    :return: A 2-tuple which contains the minimum and maximum Y coordinate of
+        the outer cylinder.
+    :rtype: tuple
+    """
+
     base_cylinder = ObjHandler.read("res/cylinder.obj")
     base_dimension = ObjHandler.dimension(base_cylinder)
 
@@ -96,17 +123,23 @@ def generate_cylinders_obj(
                 map(lambda s: region + s, ["Inlet", "Outlet", "Wall"])
             )
             base_cylinder.regions_change_indexes.append((0, 0))
-            base_cylinder.regions_change_indexes.append((left.shape[0], 1))
+            base_cylinder.regions_change_indexes.append((right.shape[0], 1))
             base_cylinder.regions_change_indexes.append(
                 (left.shape[0] + right.shape[0], 2)
             )
 
             # as always we increment the result by 1
             base_cylinder.polygons = (
-                np.concatenate([left, right, walls], axis=0) + 1
+                np.concatenate([right, left, walls], axis=0) + 1
             )
 
         ObjHandler.write(base_folder + "/" + filename, base_cylinder)
 
-        # after scaling we unscale to reset che changes to the base cylinder
-        ObjHandler.scale(base_cylinder, 1 / scale_factors)
+        if idx == len(dimensions) - 1:
+            return (
+                np.min(base_cylinder.vertices[:, 1]),
+                np.max(base_cylinder.vertices[:, 1]),
+            )
+        else:
+            # after scaling we unscale to reset che changes to the base cylinder
+            ObjHandler.scale(base_cylinder, 1 / scale_factors)
