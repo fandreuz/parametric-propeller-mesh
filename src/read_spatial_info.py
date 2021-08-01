@@ -41,3 +41,17 @@ def diameter(data):
     dims = dimension(data)
     # the diameter of the propeller lies on the XZ plane
     return max(dims[0], dims[2])
+
+
+def boundary(data):
+    return np.concatenate(
+        [
+            np.min(data.points, axis=0)[None, :],
+            np.max(data.points, axis=0)[None, :],
+        ],
+        axis=0,
+    )
+
+
+def middle_point(data):
+    return np.sum(boundary(data), axis=0) / 2

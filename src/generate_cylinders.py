@@ -1,5 +1,6 @@
 import numpy as np
 from smithers.io.obj import ObjHandler
+from .read_spatial_info import middle_point, boundary
 
 
 def compute_cylinder_dimensions(
@@ -44,8 +45,50 @@ def compute_cylinder_dimensions(
         return np.asarray(dimensions)
 
 
+def compute_cylinder_anchors(
+    ydistance_from_innermost, outer_cylinder_y_dimension, propeller
+):
+    propeller_middle = middle_point(propeller)
+    propeller_boundary = boundary(propeller)
+
+    # we return the x and z middle points, and the biggest Y coordinate of the
+    # propeller
+    outer_anchor = np.array(
+        [propeller_middle[0], propeller_boundary[1, 1], propeller_middle[2]]
+    )[None, :]
+
+    outer_cylinder_y_min = (
+        propeller_boundary[1, 1] - outer_cylinder_y_dimension
+    )
+
+    middle_layer = np.repeat(
+        np.array([propeller_middle[0], np.nan, propeller_middle[2]])[None, :],
+        repeats=len(ydistance_from_innermost),
+        axis=0,
+    )
+
+    # space_left is the space between the outlet and the tip of the propeller
+    # it is updated as soon a cylinder erases the space left
+    space_left = outer_cylinder_y_dimension - (
+        propeller_boundary[1, 1] - propeller_boundary[0, 1]
+    )
+    for idx in range(len(ydistance_from_innermost)):
+        if idx == 0:
+            base = propeller_boundary[0, 1]
+        else:
+            base = middle_layer[idx - 1, 1]
+
+        middle_layer[idx, 1] = (
+            base - ydistance_from_innermost[idx] * space_left
+        )
+        space_left = middle_layer[idx, 1] - outer_cylinder_y_min
+
+    return np.concatenate([middle_layer, outer_anchor], axis=0)
+
+
 def generate_cylinders_obj(
     dimensions,
+    anchors,
     base_folder=".",
     paths=["innerCylinder.obj", "middleCylinder.obj", "outerCylinder.obj"],
     regions=["innerCylinder", "middleCylinder", "outerCylinder"],
@@ -80,8 +123,8 @@ def generate_cylinders_obj(
     base_cylinder = ObjHandler.read("res/cylinder.obj")
     base_dimension = ObjHandler.dimension(base_cylinder)
 
-    for expected_dimension, filename, region, idx in zip(
-        dimensions, paths, regions, range(len(dimensions))
+    for expected_dimension, filename, region, idx, anchor in zip(
+        dimensions, paths, regions, range(len(dimensions)), anchors
     ):
         scale_factors = expected_dimension / base_dimension
         ObjHandler.scale(base_cylinder, scale_factors)
@@ -89,10 +132,27 @@ def generate_cylinders_obj(
         base_cylinder.regions.clear()
         base_cylinder.regions_change_indexes.clear()
 
+        cylinder_middle = (
+            np.max(base_cylinder.vertices, axis=0)
+            + np.min(base_cylinder.vertices, axis=0)
+        ) / 2
+
+        translation_vector = anchor - cylinder_middle
+
         if idx != len(dimensions) - 1:
+            translation_vector[1] = anchor[1] - np.min(
+                base_cylinder.vertices[:, 1]
+            )
+            ObjHandler.translate(base_cylinder, translation_vector)
+
             base_cylinder.regions.append(region)
             base_cylinder.regions_change_indexes.append((0, 0))
         else:
+            translation_vector[1] = anchor[1] - np.max(
+                base_cylinder.vertices[:, 1]
+            )
+            ObjHandler.translate(base_cylinder, translation_vector)
+
             # the outermost cylinder wants three regions:
             # outerCylinderWall, outerCylinderInlet, outerCylinderOutlet
 
@@ -133,13 +193,11 @@ def generate_cylinders_obj(
                 np.concatenate([right, left, walls], axis=0) + 1
             )
 
-        ObjHandler.write(base_folder + "/" + filename, base_cylinder)
+        ObjHandler.write(base_cylinder, base_folder + "/" + filename)
 
         if idx == len(dimensions) - 1:
-            return (
-                np.min(base_cylinder.vertices[:, 1]),
-                np.max(base_cylinder.vertices[:, 1]),
-            )
+            return ObjHandler.boundary(base_cylinder, axis=1)
         else:
             # after scaling we unscale to reset che changes to the base cylinder
             ObjHandler.scale(base_cylinder, 1 / scale_factors)
+            ObjHandler.translate(base_cylinder, -translation_vector)
