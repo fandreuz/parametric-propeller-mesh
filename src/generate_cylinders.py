@@ -1,6 +1,5 @@
 import numpy as np
 from smithers.io.obj import ObjHandler
-from .read_spatial_info import middle_point, boundary
 
 
 def compute_cylinder_dimensions(
@@ -46,13 +45,66 @@ def compute_cylinder_dimensions(
 
 
 def compute_cylinder_anchors(
-    ydistance_from_innermost, outer_cylinder_y_dimension, propeller
+    take_available_y, outer_cylinder_y_dimension, propeller_boundary
 ):
-    propeller_middle = middle_point(propeller)
-    propeller_boundary = boundary(propeller)
+    """Generate a set of X,Y,Z anchors to be used during the generation of the
+    cylinders. X and Z will be used as the center coordinate of the cylinder
+    on the corresponding axis. The interpretation of the Y anchor varies with
+    the index of the cylinder.
 
-    # we return the x and z middle points, and the biggest Y coordinate of the
-    # propeller
+    If the cylinder is the outermost one, the Y anchor is the end of the stem
+    of the propeller, which means that the biggest Y coordinate reached by
+    the outermost cylinder will match the Y anchor.
+
+    Otherwise, the Y anchor is the starting Y point of the cylinder, i.e. its
+    lowest Y coordinate.
+
+    A 1D array of float values is required to specify the Y position of the
+    cylinders (except for the outermost one, which is already fixed according
+    to what we stated above). Each cylinder, starting from the innermost one,
+    "arrives" in a situtation where a fixed amount of space is available.
+
+    For instance, let :math:`O_y` be the lowest Y coordinate reached
+    by the outermost cylinder. Note that this value is uniquely determined since
+    we already know the y dimension of each cylinder, and we also now the
+    biggest Y coordinate reached by the outermost cylinder). Let :math:`x_y` be
+    the lowest Y coordinate reached by the propeller tip. When the innermost
+    cylinder is inserted, the amount of space available is :math:`O_y - x_y`.
+    When we insert the second cylinder, the amount of space available is
+    :math:`O_y - I_y`, where :math:`I_y` is the lowest Y coordinate reached
+    by the innermost cylinder, and so on.
+
+    The parameter `take_available_y` is needed to specify how much of
+    the available space the cylinder has to take at each step. It must be a
+    subset of :math:`(0,1)`, since the borders of two cylinders cannot overlap.
+
+    The first item is the amount of available space taken by the innermost
+    cylinder, the last is the amount of available space taken by the last
+    cylinder which is not the outermost (since the outermost cylinder is already
+    fixed).
+
+    For instance, if `take_available_y=[0.1,0.5]` the innermost cylinder will
+    take 1/10 of the available space, and the middle cylinder will take 1/2 of
+    what's available after the first step (note that the available space changes
+    step by step).
+
+    :param take_available_y: The amount of available space on the Y axis that
+        each cylinder has to take, must be a subset of (0,1).
+    :type take_available_y: list
+    :param outer_cylinder_y_dimension: The Y dimension of the outermost
+        cylinder.
+    :type outer_cylinder_y_dimension: float
+    :param propeller_boundary: A 2D array which represents the boundary of the
+        propeller (first row minimum, second row maximum, one column for each
+        axis).
+    :type propeller_boundary: np.ndarray
+    :return: A 2D array which contains the X,Y,Z anchors (one row for each
+        cylinder).
+    :rtype: np.ndarray
+    """
+
+    propeller_middle = np.sum(propeller_boundary, axis=0) / 2
+
     outer_anchor = np.array(
         [propeller_middle[0], propeller_boundary[1, 1], propeller_middle[2]]
     )[None, :]
@@ -63,7 +115,7 @@ def compute_cylinder_anchors(
 
     middle_layer = np.repeat(
         np.array([propeller_middle[0], np.nan, propeller_middle[2]])[None, :],
-        repeats=len(ydistance_from_innermost),
+        repeats=len(take_available_y),
         axis=0,
     )
 
@@ -72,15 +124,15 @@ def compute_cylinder_anchors(
     space_left = outer_cylinder_y_dimension - (
         propeller_boundary[1, 1] - propeller_boundary[0, 1]
     )
-    for idx in range(len(ydistance_from_innermost)):
+    for idx in range(len(take_available_y)):
         if idx == 0:
             base = propeller_boundary[0, 1]
         else:
             base = middle_layer[idx - 1, 1]
 
-        middle_layer[idx, 1] = (
-            base - ydistance_from_innermost[idx] * space_left
-        )
+        # taking only take_available_y[idx] * space_left would be wrong, we need
+        # to append this quantity to the last known base
+        middle_layer[idx, 1] = base - take_available_y[idx] * space_left
         space_left = middle_layer[idx, 1] - outer_cylinder_y_min
 
     return np.concatenate([middle_layer, outer_anchor], axis=0)
@@ -119,6 +171,12 @@ def generate_cylinders_obj(
         the outer cylinder.
     :rtype: tuple
     """
+
+    if dimensions.shape[0] != anchors.shape[0]:
+        raise ValueError(
+            """You probably supplied a wrong number of values to
+            `compute_cylinder_anchors`"""
+        )
 
     base_cylinder = ObjHandler.read("res/cylinder.obj")
     base_dimension = ObjHandler.dimension(base_cylinder)

@@ -1,5 +1,5 @@
 from smithers.io.stlhandler import STLHandler
-from src.read_spatial_info import dimension, diameter, min_max, DataWrapper
+from src.read_spatial_info import dimension, diameter, min_max, DataWrapper, boundary
 from src.generate_cylinders import (
     generate_cylinders_obj,
     compute_cylinder_dimensions,
@@ -32,6 +32,7 @@ propeller_path = sys.argv[2]
 # first of all we read the dimension of the propeller
 data = DataWrapper(propeller_path)
 propeller_dimension = dimension(data)
+propeller_boundary = dimension(data)
 propeller_diameter = diameter(data)
 
 propeller_newpath = str(
@@ -53,16 +54,8 @@ cylinder_anchors = compute_cylinder_anchors(
     ydistance_from_innermost=[0.1, 0.5],
     # the length of the outermost cylinder
     outer_cylinder_y_dimension=cylinder_dimensions[-1, 1],
-    propeller=data,
+    propeller_boundary=propeller_boundary,
 )
-
-if cylinder_anchors.shape[0] < cylinder_dimensions.shape[0]:
-    raise ValueError(
-        """You probably supplied a wrong number of anchors.
-        Found {}, required {} (# of cylinders - 1)""".format(
-            cylinder_anchors.shape[0], cylinder_dimensions.shape[0] - 1
-        )
-    )
 
 miny, maxy = generate_cylinders_obj(
     dimensions=cylinder_dimensions,
