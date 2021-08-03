@@ -141,9 +141,8 @@ def compute_cylinder_anchors(
 def generate_cylinders_obj(
     dimensions,
     anchors,
+    names,
     base_folder=".",
-    paths=["innerCylinder.obj", "middleCylinder.obj", "outerCylinder.obj"],
-    regions=["innerCylinder", "middleCylinder", "outerCylinder"],
 ):
     """Generate .obj files which contain cylinder that can be used to
     bound volumes with different mesh resolutions.
@@ -181,8 +180,8 @@ def generate_cylinders_obj(
     base_cylinder = ObjHandler.read("res/cylinder.obj")
     base_dimension = ObjHandler.dimension(base_cylinder)
 
-    for expected_dimension, filename, region, idx, anchor in zip(
-        dimensions, paths, regions, range(len(dimensions)), anchors
+    for expected_dimension, name, idx, anchor in zip(
+        dimensions, names, range(len(dimensions)), anchors
     ):
         scale_factors = expected_dimension / base_dimension
         ObjHandler.scale(base_cylinder, scale_factors)
@@ -203,7 +202,7 @@ def generate_cylinders_obj(
             )
             ObjHandler.translate(base_cylinder, translation_vector)
 
-            base_cylinder.regions.append(region)
+            base_cylinder.regions.append(name)
             base_cylinder.regions_change_indexes.append((0, 0))
         else:
             translation_vector[1] = anchor[1] - np.max(
@@ -238,7 +237,7 @@ def generate_cylinders_obj(
             walls = poly[walls_bool_idxes]
 
             base_cylinder.regions.extend(
-                map(lambda s: region + s, ["Inlet", "Outlet", "Wall"])
+                map(lambda s: name + s, ["Inlet", "Outlet", "Wall"])
             )
             base_cylinder.regions_change_indexes.append((0, 0))
             base_cylinder.regions_change_indexes.append((right.shape[0], 1))
@@ -251,7 +250,7 @@ def generate_cylinders_obj(
                 np.concatenate([right, left, walls], axis=0) + 1
             )
 
-        ObjHandler.write(base_cylinder, base_folder + "/" + filename)
+        ObjHandler.write(base_cylinder, base_folder + "/" + name + ".obj")
 
         if idx == len(dimensions) - 1:
             return ObjHandler.boundary(base_cylinder, axis=1)

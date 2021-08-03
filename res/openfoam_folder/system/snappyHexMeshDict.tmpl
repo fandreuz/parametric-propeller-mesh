@@ -28,30 +28,7 @@ addLayers       false;
 // - to 'snap' the mesh boundary to the surface
 geometry
 {
-    innerCylinder
-    {
-        type        triSurfaceMesh;
-        file        "innerCylinder.obj";
-        regions
-        {
-            innerCylinder
-            {
-                 name       innerCylinder;
-            }
-        }
-    }
-    middleCylinder
-    {
-        type        triSurfaceMesh;
-        file        "middleCylinder.obj";
-        regions
-        {
-            middleCylinder
-            {
-                 name       middleCylinder;
-            }
-        }
-    }
+@searchable_surface_list
     outerCylinder
     {
         type        triSurfaceMesh;
@@ -139,7 +116,7 @@ castellatedMeshControls
     features
     (
         {
-            file        "innerCylinder.eMesh";
+            file        "cylinder0.eMesh";
             level       4;
         }
         {
@@ -165,11 +142,11 @@ castellatedMeshControls
 
     refinementSurfaces
     {
-        innerCylinder
+        cylinder0
         {
             level       (4 4);
-            cellZone    innerCylinder;
-            faceZone    innerCylinder;
+            cellZone    cylinder0;
+            faceZone    cylinder0;
             cellZoneInside  inside;
         }
         outerCylinder
@@ -227,16 +204,7 @@ castellatedMeshControls
 
     refinementRegions
     {
-        innerCylinder
-        {
-            mode        inside;
-            levels      ((1E15 4));
-        }
-        middleCylinder
-        {
-            mode        inside;
-            levels      ((1E15 3));
-        }
+@refinement_regions_list
     }
 
 

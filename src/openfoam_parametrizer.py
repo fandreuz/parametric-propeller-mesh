@@ -1,5 +1,12 @@
-from string import Template
 from pathlib import Path
+from operator import itemgetter
+from src.steroid_dict import SteroidDict
+from string import Template
+
+
+class CaseTemplate(Template):
+    delimiter = "@"
+
 
 parametrized_files = [
     "constant/dynamicMeshDict.tmpl",
@@ -9,6 +16,25 @@ parametrized_files = [
     "system/snappyHexMeshDict.tmpl",
     "system/surfaceFeaturesDict.tmpl",
 ]
+
+searchable_surface_list_string = """    @cylinder_names_noouter
+    {
+        type        triSurfaceMesh;
+        file        "@cylinder_names_noouter.obj";
+        regions
+        {
+            @cylinder_names_noouter
+            {
+                 name       @cylinder_names_noouter;
+            }
+        }
+    }"""
+
+refinement_regions_string = """        @cylinder_names_noouter
+        {
+            mode        inside;
+            levels      ((1E15 @refinement_values));
+        }"""
 
 default_values = dict(
     decompose_nx=1,
@@ -22,9 +48,14 @@ default_values = dict(
     maxz=0.3,
 )
 
-
-class CaseTemplate(Template):
-    delimiter = "@"
+dictionary = SteroidDict(default_values)
+dictionary["cylinder_names_noouter"] = lambda dc: dc["cylinder_names"][:-1]
+dictionary.set_computable_template(
+    "searchable_surface_list", searchable_surface_list_string, repetable=True
+)
+dictionary.set_computable_template(
+    "refinement_regions_list", refinement_regions_string, repetable=True
+)
 
 
 def write(dc, file, destination):
@@ -41,11 +72,9 @@ def generate_openfoam_configuration_dicts(destination, **kwargs):
     if isinstance(destination, str):
         destination = Path(destination)
 
-    # we use default values for those not provided
-    dc = default_values.copy()
-    dc.update(kwargs)
+    dictionary.update(kwargs)
 
     openfoam_folder = Path("res/openfoam_folder")
     for path in parametrized_files:
         file = openfoam_folder / path
-        write(dc, file, destination)
+        write(dictionary, file, destination)
