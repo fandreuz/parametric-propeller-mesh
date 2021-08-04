@@ -224,3 +224,18 @@ def test_adjust_dimension_outer_not_enclose():
 
     with raises(ValueError):
         adjust_dimensions(dimension, anchors)
+
+def test_adjust_dimension_anchors_dont_change():
+    dimension = np.array([
+        [0.5,2,1],
+        [1, 3, 2]
+    ])
+
+    anchors = np.array([
+        [0,2.1,0],
+        [0,5,0],
+    ])
+    anchors_copy = np.array(anchors)
+
+    adjust_dimensions(dimension, anchors)
+    np.testing.assert_allclose(anchors,anchors_copy)

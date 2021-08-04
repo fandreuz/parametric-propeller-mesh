@@ -10,11 +10,13 @@ from src.generate_cylinders import (
     generate_cylinders_obj,
     compute_cylinder_dimensions,
     compute_cylinder_anchors,
+    adjust_dimensions
 )
 from src.openfoam_parametrizer import generate_openfoam_configuration_dicts
 from pathlib import Path
 import sys
 from shutil import copyfile
+import numpy as np
 
 """PARAMETERS
 # 1: the path to the OpenFOAM folder (with the subfolders system, constant, etc)
@@ -88,6 +90,7 @@ cylinder_anchors = compute_cylinder_anchors(
     outer_cylinder_y_dimension=cylinder_dimensions[-1, 1],
     propeller_boundary=propeller_boundary,
 )
+adjust_dimensions(cylinder_dimensions, cylinder_anchors)
 
 miny, maxy = generate_cylinders_obj(
     dimensions=cylinder_dimensions,

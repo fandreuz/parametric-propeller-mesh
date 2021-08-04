@@ -36,6 +36,11 @@ refinement_regions_string = """        @cylinder_names_noouter
             levels      ((1E15 @refinement_values));
         }"""
 
+#features_surfaces = """        {
+#            file        "@cylinder_names_in_contact_with_propeller.eMesh";
+#            level       4;
+#        }"""
+
 default_values = dict(
     decompose_nx=1,
     decompose_ny=4,
@@ -56,7 +61,9 @@ dictionary.set_computable_template(
 dictionary.set_computable_template(
     "refinement_regions_list", refinement_regions_string, repetable=True
 )
-
+#dictionary.set_computable_template(
+#    "features_surfaces", features_surfaces, repetable=True
+#)
 
 def write(dc, file, destination):
     template = CaseTemplate(file.read_text())
