@@ -258,3 +258,37 @@ def generate_cylinders_obj(
             # after scaling we unscale to reset che changes to the base cylinder
             ObjHandler.scale(base_cylinder, 1 / scale_factors)
             ObjHandler.translate(base_cylinder, -translation_vector)
+
+
+def adjust_dimensions(cylinder_dimensions, cylinder_anchors):
+    # replace np.nan to match the bigges Y coordinate of Z
+    nans = np.isnan(cylinder_dimensions[:, 1])
+    maxy = cylinder_anchors[-1, 1]
+    cylinder_dimensions[nans, 1] = maxy - cylinder_anchors[nans, 1]
+
+    # check that coords are non-decreasing
+    shifted = np.concatenate(
+        [np.zeros((1, cylinder_dimensions.shape[1])), cylinder_dimensions[:-1]]
+    )
+    if np.any(cylinder_dimensions < shifted):
+        raise ValueError("Invalid dimension of cylinders")
+
+    # verify that the dimension of the last cylinder is high enough to contain
+    # all the others
+    cylinder_boundaries_maxy = (
+        cylinder_anchors[:, 1] + cylinder_dimensions[:, 1]
+    )
+    cylinder_boundaries_maxy[-1] = cylinder_anchors[-1, 1]
+
+    cylinder_boundaries_miny = cylinder_anchors[:, 1]
+    cylinder_boundaries_miny[-1] = (
+        cylinder_anchors[-1, 1] - cylinder_dimensions[-1, 1]
+    )
+
+    if (
+        np.max(cylinder_boundaries_maxy) != cylinder_boundaries_maxy[-1]
+        or np.min(cylinder_boundaries_miny) != cylinder_boundaries_miny[-1]
+    ):
+        raise ValueError(
+            "The outer cylinder does not enclose the internal cylinders"
+        )

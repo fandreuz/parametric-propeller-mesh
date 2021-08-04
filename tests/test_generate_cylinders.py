@@ -2,10 +2,12 @@ from src.generate_cylinders import (
     compute_cylinder_dimensions,
     generate_cylinders_obj,
     compute_cylinder_anchors,
+    adjust_dimensions
 )
 import numpy as np
 import pytest
 from smithers.io.obj import ObjHandler
+from pytest import raises
 
 # ------------------------
 # test cylinder dimensions
@@ -74,7 +76,7 @@ def test_generate_cylinders():
     generate_cylinders_obj(
         dimensions=np.array([[1, 1, 1], [2, 2, 2]]),
         anchors=anchors,
-        paths=["tests/test_datasets/smol.obj", "tests/test_datasets/big.obj"],
+        names=['smol', 'big']
     )
 
     smol = ObjHandler.read("tests/test_datasets/smol.obj")
@@ -124,3 +126,101 @@ def test_compute_cylinder_dimensions_wrongdim2():
 def test_compute_cylinder_dimensions_nopropellerdiameter():
     with pytest.raises(ValueError):
         compute_cylinder_dimensions(scales=[1, 2, 1])
+
+def test_adjust_dimension_err():
+    dimension = np.array([
+        [1,2,1],
+        [0.5, 3, 2]
+    ])
+
+    anchors = np.array([
+        [0,-1,0],
+        [0,5,0],
+    ])
+
+    with raises(ValueError):
+        adjust_dimensions(dimension, anchors)
+
+def test_adjust_dimension():
+    exp = np.array([
+        [0.5,2,1],
+        [1, 3, 2]
+    ])
+
+    anchors = np.array([
+        [0,2.1,0],
+        [0,5,0],
+    ])
+
+    dimension = np.array(exp)
+    adjust_dimensions(dimension, anchors)
+    np.testing.assert_allclose(dimension[:,[0,2]], exp[:,[0,2]])
+
+def test_adjust_dimension_nan():
+    initial_dimension = np.array([
+        [0.5,np.nan,1],
+        [0.5,np.nan,1],
+        [1, 10, 2]
+    ])
+
+    exp = np.array([
+        [0.5,6,1],
+        [0.5,7,1],
+        [1, 10, 2]
+    ])
+
+    anchors = np.array([
+        [0,-1,0],
+        [0,-2,0],
+        [0,5,0],
+    ])
+
+    adjust_dimensions(initial_dimension, anchors)
+    np.testing.assert_allclose(initial_dimension, exp)
+
+def test_adjust_dimension_nan_err():
+    dimension = np.array([
+        [0.5,np.nan,1],
+        [0.5,2,1],
+        [1, 3, 2]
+    ])
+
+    anchors = np.array([
+        [0,-1,0],
+        [0,-2,0],
+        [0,5,0],
+    ])
+
+    with raises(ValueError):
+        adjust_dimensions(dimension, anchors)
+
+def test_adjust_dimension_outer_not_enclose():
+    dimension = np.array([
+        [0.5,10,1],
+        [0.5,2,1],
+        [1, 3, 2]
+    ])
+
+    anchors = np.array([
+        [0,-1,0],
+        [0,-2,0],
+        [0,5,0],
+    ])
+
+    with raises(ValueError):
+        adjust_dimensions(dimension, anchors)
+
+    dimension = np.array([
+        [0.5,2,1],
+        [0.5,3,1],
+        [1, 4, 2]
+    ])
+
+    anchors = np.array([
+        [0,-10,0],
+        [0,-2,0],
+        [0,5,0],
+    ])
+
+    with raises(ValueError):
+        adjust_dimensions(dimension, anchors)
