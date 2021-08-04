@@ -35,9 +35,12 @@ openfoam_path = Path(openfoam_folder)
 
 propeller_path = sys.argv[2]
 
-refinement_values=[6, 5, 4]
+# -------------------------------  CONFIG -------------------------------------
 
-N_of_cylinders = 3
+# refinementRegions in snappyHesMeshDict
+refinement_values = [5, 4, 3]
+
+N_of_cylinders = 4
 cylinder_names = ["cylinder{}".format(i) for i in range(N_of_cylinders - 1)]
 cylinder_names.append("outerCylinder")
 
@@ -52,6 +55,14 @@ cylinder_scales = [
 # ydistance, check compute_cylinder_anchors
 take_available_y = [0.0001, 0.8, 0.9]
 
+if (
+    len(take_available_y) != N_of_cylinders - 1
+    or len(cylinder_scales) != N_of_cylinders
+):
+    raise ValueError("Unexpected number of cylinders.")
+
+# -------------------------------  SCRIPT -------------------------------------
+
 # first of all we read the dimension of the propeller
 data = DataWrapper(propeller_path)
 propeller_dimension = dimension(data)
@@ -62,9 +73,11 @@ propeller_newpath = str(
     openfoam_path / "constant" / "triSurface" / "propeller.obj"
 )
 
+# we copy the propeller file into the OpenFOAM folder
 copyfile(propeller_path, propeller_newpath)
 
-# then we generate three cylinders
+# then we generate the cylinders according to the dimensions specified by the
+# user
 cylinder_dimensions = compute_cylinder_dimensions(
     scales=cylinder_scales,
     propeller_diameter=propeller_diameter,
@@ -104,5 +117,5 @@ generate_openfoam_configuration_dicts(
     minz=minz,
     maxz=maxz,
     cylinder_names=cylinder_names,
-    refinement_values=refinement_values
+    refinement_values=refinement_values,
 )
