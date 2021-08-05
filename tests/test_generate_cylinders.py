@@ -76,7 +76,8 @@ def test_generate_cylinders():
     generate_cylinders_obj(
         dimensions=np.array([[1, 1, 1], [2, 2, 2]]),
         anchors=anchors,
-        names=['smol', 'big']
+        names=['smol', 'big'],
+        base_folder='tests/test_datasets'
     )
 
     smol = ObjHandler.read("tests/test_datasets/smol.obj")
