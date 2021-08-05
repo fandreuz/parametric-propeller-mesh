@@ -32,14 +32,22 @@ searchable_surface_list_string = """    @cylinder_names_noouter
 
 refinement_regions_string = """        @cylinder_names_noouter
         {
-            mode        inside;
-            levels      ((1E15 @refinement_values));
+            mode        @refinement_regions_mode;
+            levels      ((@refinement_regions_distance @refinement_values));
         }"""
 
-#features_surfaces = """        {
-#            file        "@cylinder_names_in_contact_with_propeller.eMesh";
-#            level       4;
-#        }"""
+features_string = """        {
+            file        "@cylinders_intersecting_propeller.eMesh";
+            level       4;
+        }"""
+
+refinement_surfaces_string = """        @cylinders_intersecting_propeller
+        {
+            level       (5 5);
+            cellZone    @cylinders_intersecting_propeller;
+            faceZone    @cylinders_intersecting_propeller;
+            cellZoneInside  inside;
+        }"""
 
 default_values = dict(
     decompose_nx=1,
@@ -51,6 +59,10 @@ default_values = dict(
     maxy=0.21,
     minz=-0.3,
     maxz=0.3,
+    resolve_feature_angle=80,
+    refinement_regions_mode="inside",
+    refinement_regions_distance=1,
+    refinement_values=5,
 )
 
 dictionary = SteroidDict(default_values)
@@ -61,9 +73,13 @@ dictionary.set_computable_template(
 dictionary.set_computable_template(
     "refinement_regions_list", refinement_regions_string, repetable=True
 )
-#dictionary.set_computable_template(
-#    "features_surfaces", features_surfaces, repetable=True
-#)
+dictionary.set_computable_template(
+    "features_list", features_string, repetable=True
+)
+dictionary.set_computable_template(
+    "refinement_surface_list", refinement_surfaces_string, repetable=True
+)
+
 
 def write(dc, file, destination):
     template = CaseTemplate(file.read_text())

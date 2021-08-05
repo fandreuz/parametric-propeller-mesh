@@ -115,10 +115,7 @@ castellatedMeshControls
     // This is a featureEdgeMesh, read from constant/triSurface for now.
     features
     (
-        {
-            file        "cylinder0.eMesh";
-            level       4;
-        }
+@features_list
         {
             file        "outerCylinder.eMesh";
             level       0;
@@ -142,13 +139,7 @@ castellatedMeshControls
 
     refinementSurfaces
     {
-        cylinder0
-        {
-            level       (4 4);
-            cellZone    cylinder0;
-            faceZone    cylinder0;
-            cellZoneInside  inside;
-        }
+@refinement_surface_list
         outerCylinder
         {
             level       (0 0);
@@ -186,7 +177,7 @@ castellatedMeshControls
     }
 
     // Resolve sharp angles
-    resolveFeatureAngle 30;
+    resolveFeatureAngle @resolve_feature_angle;
 
 
     // Region-wise refinement
@@ -216,7 +207,7 @@ castellatedMeshControls
     // section reachable from the locationInMesh is kept.
     // NOTE: This point should never be on a face, always inside a cell, even
     // after refinement.
-    locationInMesh (0.01 -0.5 0.01);
+    locationInMesh @location_in_mesh;
 
 
     // Whether any faceZones (as specified in the refinementSurfaces)

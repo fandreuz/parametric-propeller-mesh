@@ -10,7 +10,7 @@ from src.generate_cylinders import (
     generate_cylinders_obj,
     compute_cylinder_dimensions,
     compute_cylinder_anchors,
-    adjust_dimensions
+    adjust_dimensions,
 )
 from src.openfoam_parametrizer import generate_openfoam_configuration_dicts
 from pathlib import Path
@@ -106,6 +106,11 @@ minx, minz = (-maxx, -maxz)
 # y is the length
 yfactor = (0.21 + 0.81) * cylinder_dimensions[-1][1]
 
+location_in_mesh_xz = cylinder_anchors[[0, 1], [0, 2]] + np.median(
+    cylinder_dimensions[[0, 1], [0, 2]], axis=0
+)
+location_in_mesh_y = np.median(cylinder_anchors[[0, 1], 1])
+
 # then we generate the parametrized dictionaries
 generate_openfoam_configuration_dicts(
     destination=openfoam_folder,
@@ -121,4 +126,9 @@ generate_openfoam_configuration_dicts(
     maxz=maxz,
     cylinder_names=cylinder_names,
     refinement_values=refinement_values,
+    # you may want to touch this one
+    cylinders_intersecting_propeller=[cylinder_names[0]],
+    location_in_mesh="({} {} {})".format(
+        location_in_mesh_xz[0], location_in_mesh_y, location_in_mesh_xz[1]
+    ),
 )
