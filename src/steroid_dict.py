@@ -12,6 +12,7 @@ class SteroidDict:
             dc = {}
         self._dictionary = {}
         self._compute_dict = {}
+        self._compute_dict_ordered_keys = []
         self.update(dc)
 
     def update(self, dc):
@@ -19,14 +20,22 @@ class SteroidDict:
             self.__setitem__(key, value)
 
     def __getitem__(self, key):
-        if self.is_function(key):
-            value = self._compute_dict[key]
-            return value(self)
+        if (idx := self.function_key_index(key)) != -1:
+            dc_copy = dict(self._dictionary)
+
+            # compute all up to idx
+            for k in self._compute_dict_ordered_keys[: idx + 1]:
+                dc_copy[k] = self._compute_dict[k](dc_copy)
+
+            return dc_copy[key]
         else:
             return self._dictionary[key]
 
-    def is_function(self, key):
-        return key in self._compute_dict
+    def function_key_index(self, key):
+        try:
+            return self._compute_dict_ordered_keys.index(key)
+        except ValueError:
+            return -1
 
     @staticmethod
     def is_iterable(value):
@@ -35,47 +44,37 @@ class SteroidDict:
     # if the output of the function is iterable, return the i-th
     # item; else, return the item itself
     # also returns a boolean to check when this value was a list
-    def index_or_value(self, key, index):
-        value = self[key]
+    @classmethod
+    def index_or_value(cls, value, index):
         if isinstance(value, list):
-            return (value[index], True)
+            if len(value) <= index:
+                return (None, False)
+            else:
+                return (value[index], True)
         else:
             return (value, False)
 
     # we return a 2-tuple which tells if there is at least a list
-    def index_copy(self, index):
+    @classmethod
+    def index_copy(cls, dictionary, index, up_to_key):
         # no function part
-        nofunc_ls = [
-            self.index_or_value(key, index) for key in self._dictionary.keys()
-        ]
-        temp = list(zip(*nofunc_ls))
-        nofunc_list_values = temp[0]
+        ls = list(
+            map(
+                lambda v: SteroidDict.index_or_value(v, index),
+                dictionary.values(),
+            )
+        )
+        temp = list(zip(*ls))
+        list_values = temp[0]
         # a list of booleans which tells which values was a list originally
         list_booleans = list(temp[1])
-        del temp
 
-        dc = {
-            key: value
-            for key, value in zip(self._dictionary.keys(), nofunc_list_values)
-        }
+        dc = {}
+        for key, value in zip(dictionary.keys(), list_values):
+            if value is not None:
+                dc[key] = value
 
-        # function part
-        func_ls = [
-            self.index_or_value(key, index)
-            for key in list(self._compute_dict.keys())
-        ]
-        if(len(func_ls) > 0):
-            temp = list(zip(*func_ls))
-            func_list_values = temp[0]
-            list_booleans.extend(temp[1])
-
-            dc.update(
-                {
-                    key: value
-                    for key, value in zip(self._compute_dict, func_list_values)
-                }
-            )
-        return (dc,any(list_booleans))
+        return (dc, any(list_booleans))
 
     # we support two types of templates: repeatable and non-repetable
     def set_computable_template(self, key, string, repetable=False):
@@ -84,39 +83,31 @@ class SteroidDict:
         if repetable:
 
             def value(dc):
-                del dc._compute_dict[key]
-
-                dc_index_copies = []
+                strings = []
+                i = 0
                 try:
-                    i = 0
                     while True:
-                        index_dc, a_list = dc.index_copy(i)
-                        dc_index_copies.append(index_dc)
+                        index_dc, a_list = SteroidDict.index_copy(dc, i, key)
+                        strings.append(string_template.substitute(index_dc))
 
                         if a_list:
                             i += 1
                         else:
                             break
-                except IndexError:
+                except KeyError:
                     pass
-                dc[key] = value
 
-                return "\n".join(
-                    map(
-                        lambda d: string_template.substitute(d),
-                        dc_index_copies,
-                    )
-                )
-
+                return "\n".join(strings)
 
         else:
             value = lambda dc: string_template.substitute(dc)
 
-        self._compute_dict[key] = value
+        self[key] = value
 
     def __setitem__(self, key, value):
         if callable(value):
             self._compute_dict[key] = value
+            self._compute_dict_ordered_keys.append(key)
         else:
             self._dictionary[key] = value
 
@@ -132,3 +123,14 @@ class SteroidDict:
         ls = list(self._dictionary.keys())
         ls.extend(self._compute_dict.keys())
         return ls
+
+    def __contains__(self, item):
+        return item in self._dictionary or item in self._compute_dict
+
+    def __delitem__(self, item):
+        if item in self._dictionary:
+            del self._dictionary[item]
+        elif item in self._compute_dict:
+            del self._compute_dict[item]
+        else:
+            raise ValueError("Deleting a non-existent object")
