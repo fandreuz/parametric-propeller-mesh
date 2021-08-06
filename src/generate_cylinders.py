@@ -103,7 +103,7 @@ def compute_cylinder_anchors(
     :rtype: np.ndarray
     """
 
-    propeller_middle = np.sum(propeller_boundary, axis=0) / 2
+    propeller_middle = np.median(propeller_boundary, axis=0)
 
     outer_anchor = np.array(
         [propeller_middle[0], propeller_boundary[1, 1], propeller_middle[2]]
@@ -189,10 +189,7 @@ def generate_cylinders_obj(
         base_cylinder.regions.clear()
         base_cylinder.regions_change_indexes.clear()
 
-        cylinder_middle = (
-            np.max(base_cylinder.vertices, axis=0)
-            + np.min(base_cylinder.vertices, axis=0)
-        ) / 2
+        cylinder_middle = np.median(base_cylinder.vertices, axis=0)
 
         translation_vector = anchor - cylinder_middle
 

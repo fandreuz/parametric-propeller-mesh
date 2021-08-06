@@ -54,4 +54,4 @@ def boundary(data):
 
 
 def middle_point(data):
-    return np.sum(boundary(data), axis=0) / 2
+    return np.median(boundary(data), axis=0)
