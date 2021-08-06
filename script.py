@@ -47,10 +47,11 @@ cylinder_names = ["cylinder{}".format(i) for i in range(N_of_cylinders - 1)]
 cylinder_names.append("outerCylinder")
 
 # wrt the propeller diameter
+# np.nan means "up to the maximum Y coordinate of outerCylinder"
 cylinder_scales = [
-    [1.1, 1, 1.1],
-    [2, 7, 2],
-    [3, 8, 3],
+    [1.1, np.nan, 1.1],
+    [2, np.nan, 2],
+    [3, np.nan, 3],
     [5, 9, 5],
 ]
 
