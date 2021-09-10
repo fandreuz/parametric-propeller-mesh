@@ -17,6 +17,9 @@ from pathlib import Path
 import sys
 from shutil import copyfile
 import numpy as np
+import params
+# we use some parameters from params in the following code
+from params import *
 
 """PARAMETERS
 # 1: the path to the OpenFOAM folder (with the subfolders system, constant, etc)
@@ -39,24 +42,8 @@ propeller_path = sys.argv[2]
 
 # -------------------------------  CONFIG -------------------------------------
 
-# refinementRegions in snappyHesMeshDict
-refinement_values = [5, 4, 3]
-
-N_of_cylinders = 4
 cylinder_names = ["cylinder{}".format(i) for i in range(N_of_cylinders - 1)]
 cylinder_names.append("outerCylinder")
-
-# wrt the propeller diameter
-# np.nan means "up to the maximum Y coordinate of outerCylinder"
-cylinder_scales = [
-    [1.1, np.nan, 1.1],
-    [2, np.nan, 2],
-    [3, np.nan, 3],
-    [5, 9, 5],
-]
-
-# ydistance, check compute_cylinder_anchors
-take_available_y = [0.0001, 0.8, 0.9]
 
 if (
     len(take_available_y) != N_of_cylinders - 1
@@ -112,24 +99,23 @@ location_in_mesh_xz = cylinder_anchors[[0, 1], [0, 2]] + np.median(
 )
 location_in_mesh_y = np.median(cylinder_anchors[[0, 1], 1])
 
-# then we generate the parametrized dictionaries
-generate_openfoam_configuration_dicts(
+# ------------------------------ CONFIG DICT----------------------------------
+
+# generate the configuration dictionary for the script
+opfoam_config_dict = dict(
     destination=openfoam_folder,
-    # OpenFOAM parameters
-    decompose_nx=4,
-    decompose_ny=4,
-    decompose_nz=4,
-    minx=minx,
-    maxx=maxx,
-    miny=miny,
-    maxy=maxy,
-    minz=minz,
-    maxz=maxz,
-    cylinder_names=cylinder_names,
-    refinement_values=refinement_values,
-    # you may want to touch this one
-    cylinders_intersecting_propeller=[cylinder_names[0]],
-    location_in_mesh="({} {} {})".format(
+    block_mesh_point_x=[minx, maxx, maxx, minx, minx, maxx, maxx, minx],
+    block_mesh_point_y=[miny, miny, maxy, maxy, miny, miny, maxy, maxy],
+    block_mesh_point_z=[minz, minz, minz, minz, maxz, maxz, maxz, maxz],
+    location_in_mesh="{} {} {}".format(
         location_in_mesh_xz[0], location_in_mesh_y, location_in_mesh_xz[1]
     ),
+    cylinder_names=cylinder_names
 )
+
+# append the values from params
+for key in filter(lambda s: not s[0] == '_', dir(params)):
+    opfoam_config_dict[key] = getattr(params, key)
+
+# then we run the parameterizer
+generate_openfoam_configuration_dicts(**opfoam_config_dict)
