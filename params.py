@@ -1,8 +1,5 @@
 import numpy as np
 
-# refinementRegions in snappyHesMeshDict
-refinement_values = [5, 4, 3]
-
 N_of_cylinders = 4
 
 # wrt the propeller diameter
