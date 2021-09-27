@@ -72,11 +72,16 @@ cylinder_dimensions = compute_cylinder_dimensions(
     scales=cylinder_scales,
     propeller_diameter=propeller_diameter,
 )
+
+propeller_middle = np.median(propeller_boundary, axis=0)
+# HERE: modifications to propeller_middle
+
 cylinder_anchors = compute_cylinder_anchors(
     take_available_y=take_available_y,
     # the length of the outermost cylinder
     outer_cylinder_y_dimension=cylinder_dimensions[-1, 1],
     propeller_boundary=propeller_boundary,
+    propeller_middle=propeller_middle
 )
 adjust_dimensions(cylinder_dimensions, cylinder_anchors)
 

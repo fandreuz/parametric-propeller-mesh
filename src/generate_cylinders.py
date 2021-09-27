@@ -45,7 +45,10 @@ def compute_cylinder_dimensions(
 
 
 def compute_cylinder_anchors(
-    take_available_y, outer_cylinder_y_dimension, propeller_boundary
+    take_available_y,
+    outer_cylinder_y_dimension,
+    propeller_boundary,
+    propeller_middle=None,
 ):
     """Generate a set of X,Y,Z anchors to be used during the generation of the
     cylinders. X and Z will be used as the center coordinate of the cylinder
@@ -103,7 +106,8 @@ def compute_cylinder_anchors(
     :rtype: np.ndarray
     """
 
-    propeller_middle = np.median(propeller_boundary, axis=0)
+    if propeller_middle is None:
+        propeller_middle = np.median(propeller_boundary, axis=0)
 
     outer_anchor = np.array(
         [propeller_middle[0], propeller_boundary[1, 1], propeller_middle[2]]
